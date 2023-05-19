@@ -1,7 +1,40 @@
+const bcrypt = require("bcryptjs");
+
 const Chip = require("../models/chip");
 const Folder = require("../models/folder");
+const User = require("../models/user");
 
 const { validationResult } = require("express-validator");
+
+exports.signupUser = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const err = new Error("Invalid data!");
+    err.statusCode = 422;
+    err.data = errors.array();
+    return next(err);
+  }
+
+  const username = req.body.username;
+  const email = req.body.email;
+  const password = req.body.password;
+  try {
+    const hashedPw = await bcrypt.hash(password, 12);
+
+    const user = new User({
+      username: username,
+      email: email,
+      password: hashedPw,
+    });
+    const result = await user.save();
+    res.status(201).json({ message: "User created!", userId: result._id });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
 
 exports.createFolder = async (req, res, next) => {
   const newFolder = new Folder({
@@ -25,16 +58,9 @@ exports.createFolder = async (req, res, next) => {
 
 exports.getFolder = async (req, res, next) => {
   const errors = validationResult(req);
-  try {
-    if (!errors.isEmpty()) {
-      const error = new Error("Validation failed, entered data is incorrect.");
-      error.statusCode = 422;
-      throw error;
-    }
-  } catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
+  if (!errors.isEmpty()) {
+    const err = new Error("Folder ID format is invalid.");
+    err.statusCode = 422;
     return next(err);
   }
 
@@ -130,36 +156,3 @@ exports.removeChipFromFolder = async (req, res, next) => {
     next(err);
   }
 };
-
-// exports.getChips = (req, res, next) => {
-//     res.status(200).json({
-//         chips:[{name: 'Cannon', desc: 'Cannon for attacking 1 enemy', dmg: 50}]
-//     });
-// };
-
-// exports.addChip = async (req, res, next) => {
-//     const number = req.body.number;
-//     const name = req.body.name;
-//     const description = req.body.description;
-//     const damage = req.body.damage;
-
-//     const chip = new Chip({
-//         number: number,
-//         name: name,
-//         description: description,
-//         damage: damage
-//     });
-
-//     try{
-//         await chip.save();
-//         res.status(201).json({
-//             message: 'Chip created successfully!',
-//             chip: chip,
-//         });
-//     } catch (err) {
-//         if (!err.statusCode) {
-//           err.statusCode = 500;
-//         }
-//         next(err);
-//     }
-// }
