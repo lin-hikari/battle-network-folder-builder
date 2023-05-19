@@ -40,6 +40,13 @@ exports.addChipToFolder = async (req, res, next) => {
       throw error;
     }
 
+    const folderFull = folder.chips.length >= 30;
+    if (folderFull) {
+      const error = new Error("Folder is already full!");
+      error.statusCode = 400;
+      throw error;
+    }
+
     folder.chips.push(chip);
     const result = await folder.save();
     res.status(200).json({ message: "Chip added to folder!", folder: result });
