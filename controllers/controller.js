@@ -1,6 +1,8 @@
 const Chip = require("../models/chip");
 const Folder = require("../models/folder");
 
+const { validationResult } = require("express-validator");
+
 exports.createFolder = async (req, res, next) => {
   const newFolder = new Folder({
     name: req.body.name,
@@ -13,6 +15,38 @@ exports.createFolder = async (req, res, next) => {
       message: "Folder created successfully!",
       newFolder: newFolder,
     });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+exports.getFolder = async (req, res, next) => {
+  const errors = validationResult(req);
+  try {
+    if (!errors.isEmpty()) {
+      const error = new Error("Validation failed, entered data is incorrect.");
+      error.statusCode = 422;
+      throw error;
+    }
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    return next(err);
+  }
+
+  const folderId = req.params.folderId;
+  const folder = await Folder.findById(folderId).populate("chips");
+  try {
+    if (!folder) {
+      const error = new Error("Could not find folder.");
+      error.statusCode = 404;
+      throw error;
+    }
+    res.status(200).json({ message: "Folder found!", folder: folder });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
