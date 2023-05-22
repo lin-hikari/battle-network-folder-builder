@@ -5,7 +5,7 @@ const { validationResult } = require("express-validator");
 const Chip = require("../models/chip");
 const Folder = require("../models/folder");
 const User = require("../models/user");
-const secretKey = require("../utility/jwt-secret-key");
+const secretKey = require("../private_values/jwt-secret-key");
 
 exports.signupUser = async (req, res, next) => {
   const errors = validationResult(req);
