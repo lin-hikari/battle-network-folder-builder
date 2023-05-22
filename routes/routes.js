@@ -34,7 +34,7 @@ router.post(
   controller.signupUser
 );
 
-//login user
+router.post("/login-user", controller.loginUser);
 
 //delete user?
 

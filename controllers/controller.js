@@ -1,10 +1,11 @@
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { validationResult } = require("express-validator");
 
 const Chip = require("../models/chip");
 const Folder = require("../models/folder");
 const User = require("../models/user");
-
-const { validationResult } = require("express-validator");
+const secretKey = require("../utility/jwt-secret-key");
 
 exports.signupUser = async (req, res, next) => {
   const errors = validationResult(req);
@@ -20,7 +21,6 @@ exports.signupUser = async (req, res, next) => {
   const password = req.body.password;
   try {
     const hashedPw = await bcrypt.hash(password, 12);
-
     const user = new User({
       username: username,
       email: email,
@@ -28,6 +28,41 @@ exports.signupUser = async (req, res, next) => {
     });
     const result = await user.save();
     res.status(201).json({ message: "User created!", userId: result._id });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+exports.loginUser = async (req, res, next) => {
+  const username = req.body.username;
+  const password = req.body.password;
+  //let loadedUser;
+  try {
+    const user = await User.findOne({ username: username });
+    if (!user) {
+      const err = new Error("User not found!");
+      err.statusCode = 401;
+      throw err;
+    }
+    //loadedUser = user;
+    const isPasswordRight = await bcrypt.compare(password, user.password);
+    if (!isPasswordRight) {
+      const err = new Error("Wrong password!");
+      err.statusCode = 401;
+      throw err;
+    }
+    const token = jwt.sign(
+      {
+        username: user.username,
+        userId: user._id.toString(),
+      },
+      secretKey,
+      { expiresIn: "30d" }
+    );
+    res.status(200).json({ token: token, userId: user._id.toString() });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
