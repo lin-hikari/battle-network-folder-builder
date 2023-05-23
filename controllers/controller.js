@@ -169,6 +169,12 @@ exports.removeChipFromFolder = async (req, res, next) => {
       throw error;
     }
 
+    if (folder.creator.toString() !== req.userId) {
+      const err = new Error("Folder does not belong to user!");
+      err.statusCode = 401;
+      throw err;
+    }
+
     const chip = await Chip.findOne({ number: chipNum });
     if (!chip) {
       const error = new Error("Chip not found!");

@@ -51,6 +51,10 @@ router.get(
 
 router.put("/add-chip-to-folder", authCheck, controller.addChipToFolder);
 
-router.put("/remove-chip-from-folder", controller.removeChipFromFolder);
+router.put(
+  "/remove-chip-from-folder",
+  authCheck,
+  controller.removeChipFromFolder
+);
 
 module.exports = router;
