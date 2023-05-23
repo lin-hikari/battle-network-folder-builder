@@ -10,6 +10,11 @@ const folderSchema = new Schema({
     type: String,
     required: true,
   },
+  creator: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
   chips: [
     {
       type: Schema.Types.ObjectId,

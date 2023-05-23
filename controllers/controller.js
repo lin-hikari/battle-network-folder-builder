@@ -39,7 +39,7 @@ exports.signupUser = async (req, res, next) => {
 exports.loginUser = async (req, res, next) => {
   const username = req.body.username;
   const password = req.body.password;
-  //let loadedUser;
+
   try {
     const user = await User.findOne({ username: username });
     if (!user) {
@@ -47,7 +47,7 @@ exports.loginUser = async (req, res, next) => {
       err.statusCode = 401;
       throw err;
     }
-    //loadedUser = user;
+
     const isPasswordRight = await bcrypt.compare(password, user.password);
     if (!isPasswordRight) {
       const err = new Error("Wrong password!");
@@ -75,6 +75,7 @@ exports.createFolder = async (req, res, next) => {
   const newFolder = new Folder({
     name: req.body.name,
     description: req.body.description,
+    creator: req.userId,
   });
 
   try {
