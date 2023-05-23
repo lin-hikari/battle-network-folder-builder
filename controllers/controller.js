@@ -92,7 +92,7 @@ exports.createFolder = async (req, res, next) => {
   }
 };
 
-exports.getFolder = async (req, res, next) => {
+exports.viewFolder = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const err = new Error("Folder ID format is invalid.");

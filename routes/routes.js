@@ -44,9 +44,9 @@ router.post("/create-folder", authCheck, controller.createFolder); //adjust this
 //delete folder
 
 router.get(
-  "/get-folder/:folderId",
+  "/view-folder/:folderId",
   [param("folderId").trim().isLength({ min: 24, max: 24 })],
-  controller.getFolder
+  controller.viewFolder
 );
 
 router.put("/add-chip-to-folder", authCheck, controller.addChipToFolder);
