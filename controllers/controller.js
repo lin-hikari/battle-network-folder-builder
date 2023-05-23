@@ -39,7 +39,7 @@ exports.signupUser = async (req, res, next) => {
 exports.loginUser = async (req, res, next) => {
   const username = req.body.username;
   const password = req.body.password;
-  //let loadedUser;
+
   try {
     const user = await User.findOne({ username: username });
     if (!user) {
@@ -47,7 +47,7 @@ exports.loginUser = async (req, res, next) => {
       err.statusCode = 401;
       throw err;
     }
-    //loadedUser = user;
+
     const isPasswordRight = await bcrypt.compare(password, user.password);
     if (!isPasswordRight) {
       const err = new Error("Wrong password!");
@@ -75,6 +75,7 @@ exports.createFolder = async (req, res, next) => {
   const newFolder = new Folder({
     name: req.body.name,
     description: req.body.description,
+    creator: req.userId,
   });
 
   try {
@@ -117,29 +118,32 @@ exports.getFolder = async (req, res, next) => {
 };
 
 exports.addChipToFolder = async (req, res, next) => {
-  const folderId = req.body.folderId;
-  const chipNum = req.body.chipNum;
-
   try {
-    const folder = await Folder.findById(folderId);
+    const folder = await Folder.findById(req.body.folderId);
     if (!folder) {
-      const error = new Error("Folder not found!");
-      error.statusCode = 404;
-      throw error;
+      const err = new Error("Folder not found!");
+      err.statusCode = 404;
+      throw err;
     }
 
-    const chip = await Chip.findOne({ number: chipNum });
+    if (folder.creator.toString() !== req.userId) {
+      const err = new Error("Folder does not belong to user!");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    const chip = await Chip.findOne({ number: req.body.chipNum });
     if (!chip) {
-      const error = new Error("Chip not found!");
-      error.statusCode = 404;
-      throw error;
+      const err = new Error("Chip not found!");
+      err.statusCode = 404;
+      throw err;
     }
 
     const folderFull = folder.chips.length >= 30;
     if (folderFull) {
-      const error = new Error("Folder is already full!");
-      error.statusCode = 400;
-      throw error;
+      const err = new Error("Folder is already full!");
+      err.statusCode = 400;
+      throw err;
     }
 
     folder.chips.push(chip);

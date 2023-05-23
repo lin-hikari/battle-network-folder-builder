@@ -3,6 +3,7 @@ const { param, body } = require("express-validator");
 
 const controller = require("../controllers/controller");
 const User = require("../models/user");
+const { authCheck } = require("../middleware/auth-check");
 
 const router = express.Router();
 
@@ -38,7 +39,7 @@ router.post("/login-user", controller.loginUser);
 
 //delete user?
 
-router.post("/create-folder", controller.createFolder); //adjust this to apply user (on controller ofc)
+router.post("/create-folder", authCheck, controller.createFolder); //adjust this to apply user (on controller ofc)
 
 //delete folder
 
@@ -48,7 +49,7 @@ router.get(
   controller.getFolder
 );
 
-router.put("/add-chip-to-folder", controller.addChipToFolder);
+router.put("/add-chip-to-folder", authCheck, controller.addChipToFolder);
 
 router.put("/remove-chip-from-folder", controller.removeChipFromFolder);
 
