@@ -1,12 +1,12 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
+const { ObjectId } = require("bson");
 
 const Chip = require("../models/chip");
 const Folder = require("../models/folder");
 const User = require("../models/user");
 const secretKey = require("../private_values/jwt-secret-key");
-const { ObjectId } = require("bson");
 
 exports.signupUser = async (req, res, next) => {
   const errors = validationResult(req);
