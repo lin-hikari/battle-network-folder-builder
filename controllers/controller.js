@@ -109,6 +109,40 @@ exports.createFolder = async (req, res, next) => {
   }
 };
 
+exports.deleteFolder = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      const err = new Error("User not found!");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const folder = await Folder.findById(req.body.folderId);
+    if (!folder) {
+      const err = new Error("Folder not found!");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (folder.creator.toString() !== req.userId) {
+      const err = new Error("Folder does not belong to user!");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    await Folder.findByIdAndDelete(req.body.folderId);
+    user.folders.pull(req.body.folderId);
+    await user.save();
+    res.status(200).json({ message: "Folder deleted!" });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
 exports.viewFolder = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

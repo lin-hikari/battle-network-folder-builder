@@ -41,7 +41,7 @@ router.post("/login-user", controller.loginUser);
 
 router.post("/create-folder", authCheck, controller.createFolder);
 
-//delete folder
+router.delete("/delete-folder", authCheck, controller.deleteFolder);
 
 router.get(
   "/view-folder/:folderId",
