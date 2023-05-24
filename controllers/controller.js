@@ -38,8 +38,13 @@ exports.signupUser = async (req, res, next) => {
 };
 
 exports.loginUser = async (req, res, next) => {
+  let user;
+  if (req.body.username)
+    user = await User.findOne({ username: req.body.username });
+  else if (req.body.email) user = await User.findOne({ email: req.body.email });
+  //const user = await User.findOne({ username: req.body.username });
+
   try {
-    const user = await User.findOne({ username: req.body.username });
     if (!user) {
       const err = new Error("User not found!");
       err.statusCode = 401;
