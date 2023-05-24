@@ -42,7 +42,6 @@ exports.loginUser = async (req, res, next) => {
   if (req.body.username)
     user = await User.findOne({ username: req.body.username });
   else if (req.body.email) user = await User.findOne({ email: req.body.email });
-  //const user = await User.findOne({ username: req.body.username });
 
   try {
     if (!user) {
