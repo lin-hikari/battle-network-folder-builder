@@ -39,7 +39,7 @@ router.post("/login-user", controller.loginUser);
 
 //delete user?
 
-router.post("/create-folder", authCheck, controller.createFolder); //adjust this to apply user (on controller ofc)
+router.post("/create-folder", authCheck, controller.createFolder);
 
 //delete folder
 
