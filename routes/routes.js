@@ -37,7 +37,7 @@ router.post(
 
 router.post("/login-user", controller.loginUser);
 
-//delete user?
+router.delete("/delete-user", authCheck, controller.deleteUser);
 
 router.post("/create-folder", authCheck, controller.createFolder);
 

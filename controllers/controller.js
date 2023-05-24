@@ -6,6 +6,7 @@ const Chip = require("../models/chip");
 const Folder = require("../models/folder");
 const User = require("../models/user");
 const secretKey = require("../private_values/jwt-secret-key");
+const { ObjectId } = require("bson");
 
 exports.signupUser = async (req, res, next) => {
   const errors = validationResult(req);
@@ -37,18 +38,18 @@ exports.signupUser = async (req, res, next) => {
 };
 
 exports.loginUser = async (req, res, next) => {
-  const username = req.body.username;
-  const password = req.body.password;
-
   try {
-    const user = await User.findOne({ username: username });
+    const user = await User.findOne({ username: req.body.username });
     if (!user) {
       const err = new Error("User not found!");
       err.statusCode = 401;
       throw err;
     }
 
-    const isPasswordRight = await bcrypt.compare(password, user.password);
+    const isPasswordRight = await bcrypt.compare(
+      req.body.password,
+      user.password
+    );
     if (!isPasswordRight) {
       const err = new Error("Wrong password!");
       err.statusCode = 401;
@@ -63,6 +64,26 @@ exports.loginUser = async (req, res, next) => {
       { expiresIn: "30d" }
     );
     res.status(200).json({ token: token, userId: user._id.toString() });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+exports.deleteUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      const err = new Error("User not found!");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    await User.findByIdAndDelete(req.userId);
+    await Folder.deleteMany({ creator: new ObjectId(req.userId) });
+    res.status(200).json({ message: "User deleted!" });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
