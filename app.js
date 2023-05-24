@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 
 const routes = require("./routes/routes");
-const mongoUrl = require("./utility/mongo-url");
+const mongoUrl = require("./private_values/mongo-url");
 
 const app = express();
 

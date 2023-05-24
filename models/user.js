@@ -1,26 +1,25 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const folderSchema = new Schema({
-  name: {
+const userSchema = new Schema({
+  username: {
     type: String,
     required: true,
   },
-  description: {
+  email: {
     type: String,
     required: true,
   },
-  creator: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
+  password: {
+    type: String,
     required: true,
   },
-  chips: [
+  folders: [
     {
       type: Schema.Types.ObjectId,
-      ref: "Chip",
+      ref: "Folder",
     },
   ],
 });
 
-module.exports = mongoose.model("Folder", folderSchema);
+module.exports = mongoose.model("User", userSchema);

@@ -1,12 +1,81 @@
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { validationResult } = require("express-validator");
+
 const Chip = require("../models/chip");
 const Folder = require("../models/folder");
+const User = require("../models/user");
+const secretKey = require("../private_values/jwt-secret-key");
 
-const { validationResult } = require("express-validator");
+exports.signupUser = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const err = new Error("Invalid data!");
+    err.statusCode = 422;
+    err.data = errors.array();
+    return next(err);
+  }
+
+  const username = req.body.username;
+  const email = req.body.email;
+  const password = req.body.password;
+  try {
+    const hashedPw = await bcrypt.hash(password, 12);
+    const user = new User({
+      username: username,
+      email: email,
+      password: hashedPw,
+    });
+    const result = await user.save();
+    res.status(201).json({ message: "User created!", userId: result._id });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+exports.loginUser = async (req, res, next) => {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  try {
+    const user = await User.findOne({ username: username });
+    if (!user) {
+      const err = new Error("User not found!");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    const isPasswordRight = await bcrypt.compare(password, user.password);
+    if (!isPasswordRight) {
+      const err = new Error("Wrong password!");
+      err.statusCode = 401;
+      throw err;
+    }
+    const token = jwt.sign(
+      {
+        username: user.username,
+        userId: user._id.toString(),
+      },
+      secretKey,
+      { expiresIn: "30d" }
+    );
+    res.status(200).json({ token: token, userId: user._id.toString() });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
 
 exports.createFolder = async (req, res, next) => {
   const newFolder = new Folder({
     name: req.body.name,
     description: req.body.description,
+    creator: req.userId,
   });
 
   try {
@@ -23,18 +92,11 @@ exports.createFolder = async (req, res, next) => {
   }
 };
 
-exports.getFolder = async (req, res, next) => {
+exports.viewFolder = async (req, res, next) => {
   const errors = validationResult(req);
-  try {
-    if (!errors.isEmpty()) {
-      const error = new Error("Validation failed, entered data is incorrect.");
-      error.statusCode = 422;
-      throw error;
-    }
-  } catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
+  if (!errors.isEmpty()) {
+    const err = new Error("Folder ID format is invalid.");
+    err.statusCode = 422;
     return next(err);
   }
 
@@ -56,29 +118,32 @@ exports.getFolder = async (req, res, next) => {
 };
 
 exports.addChipToFolder = async (req, res, next) => {
-  const folderId = req.body.folderId;
-  const chipNum = req.body.chipNum;
-
   try {
-    const folder = await Folder.findById(folderId);
+    const folder = await Folder.findById(req.body.folderId);
     if (!folder) {
-      const error = new Error("Folder not found!");
-      error.statusCode = 404;
-      throw error;
+      const err = new Error("Folder not found!");
+      err.statusCode = 404;
+      throw err;
     }
 
-    const chip = await Chip.findOne({ number: chipNum });
+    if (folder.creator.toString() !== req.userId) {
+      const err = new Error("Folder does not belong to user!");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    const chip = await Chip.findOne({ number: req.body.chipNum });
     if (!chip) {
-      const error = new Error("Chip not found!");
-      error.statusCode = 404;
-      throw error;
+      const err = new Error("Chip not found!");
+      err.statusCode = 404;
+      throw err;
     }
 
     const folderFull = folder.chips.length >= 30;
     if (folderFull) {
-      const error = new Error("Folder is already full!");
-      error.statusCode = 400;
-      throw error;
+      const err = new Error("Folder is already full!");
+      err.statusCode = 400;
+      throw err;
     }
 
     folder.chips.push(chip);
@@ -102,6 +167,12 @@ exports.removeChipFromFolder = async (req, res, next) => {
       const error = new Error("Folder not found!");
       error.statusCode = 404;
       throw error;
+    }
+
+    if (folder.creator.toString() !== req.userId) {
+      const err = new Error("Folder does not belong to user!");
+      err.statusCode = 401;
+      throw err;
     }
 
     const chip = await Chip.findOne({ number: chipNum });
@@ -130,36 +201,3 @@ exports.removeChipFromFolder = async (req, res, next) => {
     next(err);
   }
 };
-
-// exports.getChips = (req, res, next) => {
-//     res.status(200).json({
-//         chips:[{name: 'Cannon', desc: 'Cannon for attacking 1 enemy', dmg: 50}]
-//     });
-// };
-
-// exports.addChip = async (req, res, next) => {
-//     const number = req.body.number;
-//     const name = req.body.name;
-//     const description = req.body.description;
-//     const damage = req.body.damage;
-
-//     const chip = new Chip({
-//         number: number,
-//         name: name,
-//         description: description,
-//         damage: damage
-//     });
-
-//     try{
-//         await chip.save();
-//         res.status(201).json({
-//             message: 'Chip created successfully!',
-//             chip: chip,
-//         });
-//     } catch (err) {
-//         if (!err.statusCode) {
-//           err.statusCode = 500;
-//         }
-//         next(err);
-//     }
-// }
