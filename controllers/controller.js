@@ -79,6 +79,14 @@ exports.createFolder = async (req, res, next) => {
   });
 
   try {
+    const user = await User.findById(req.userId);
+    const folderLimit = user.folders.length >= 10;
+    if (folderLimit) {
+      const err = new Error("Max number of folders reached!");
+      err.statusCode = 400;
+      throw err;
+    }
+
     await newFolder.save();
     res.status(201).json({
       message: "Folder created successfully!",
