@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const { ObjectId } = require("bson");
+const crypto = require("crypto");
 
 const Chip = require("../models/chip");
 const Folder = require("../models/folder");
@@ -17,17 +18,18 @@ exports.signupUser = async (req, res, next) => {
     return next(err);
   }
 
-  const username = req.body.username;
-  const email = req.body.email;
-  const password = req.body.password;
   try {
-    const hashedPw = await bcrypt.hash(password, 12);
     const user = new User({
-      username: username,
-      email: email,
-      password: hashedPw,
+      username: req.body.username,
+      email: req.body.email,
+      password: await bcrypt.hash(req.body.password, 12),
+      authentication: {
+        token: await crypto.randomBytes(32).toString("hex"),
+        expiration: Date.now() + 86400000, //86400000ms = 1 day
+      },
     });
     const result = await user.save();
+
     res.status(201).json({ message: "User created!", userId: result._id });
   } catch (err) {
     if (!err.statusCode) {
@@ -40,10 +42,8 @@ exports.signupUser = async (req, res, next) => {
 exports.verifyUser = async (req, res, next) => {
   try {
     const user = await User.findOne({
-      authentication: {
-        token: req.params.token,
-        expiration: { $gt: Date.now() },
-      },
+      "authentication.token": req.params.token,
+      "authentication.expiration": { $gt: Date.now() },
     });
     if (!user) {
       const err = new Error("Invalid token!");
@@ -52,6 +52,8 @@ exports.verifyUser = async (req, res, next) => {
     }
 
     user.authentication.verified = true;
+    user.authentication.token = null;
+    user.authentication.expiration = null;
     await user.save();
     res.status(200).json({ message: "User verified!" });
   } catch (err) {

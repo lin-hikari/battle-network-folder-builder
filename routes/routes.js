@@ -35,7 +35,7 @@ router.post(
   controller.signupUser
 );
 
-router.post("/verify-user/:token", controller.verifyUser);
+router.put("/verify-user/:token", controller.verifyUser);
 
 router.post("/login-user", controller.loginUser);
 
