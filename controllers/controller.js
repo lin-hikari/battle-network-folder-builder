@@ -37,45 +37,6 @@ exports.signupUser = async (req, res, next) => {
   }
 };
 
-exports.loginUser = async (req, res, next) => {
-  let user;
-  if (req.body.username)
-    user = await User.findOne({ username: req.body.username });
-  else if (req.body.email) user = await User.findOne({ email: req.body.email });
-
-  try {
-    if (!user) {
-      const err = new Error("User not found!");
-      err.statusCode = 401;
-      throw err;
-    }
-
-    const isPasswordRight = await bcrypt.compare(
-      req.body.password,
-      user.password
-    );
-    if (!isPasswordRight) {
-      const err = new Error("Wrong password!");
-      err.statusCode = 401;
-      throw err;
-    }
-    const token = jwt.sign(
-      {
-        username: user.username,
-        userId: user._id.toString(),
-      },
-      secretKey,
-      { expiresIn: "30d" }
-    );
-    res.status(200).json({ token: token, userId: user._id.toString() });
-  } catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    next(err);
-  }
-};
-
 exports.verifyUser = async (req, res, next) => {
   try {
     const user = await User.findOne({
@@ -93,6 +54,52 @@ exports.verifyUser = async (req, res, next) => {
     user.authentication.verified = true;
     await user.save();
     res.status(200).json({ message: "User verified!" });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+exports.loginUser = async (req, res, next) => {
+  let user;
+  if (req.body.username)
+    user = await User.findOne({ username: req.body.username });
+  else if (req.body.email) user = await User.findOne({ email: req.body.email });
+
+  try {
+    if (!user) {
+      const err = new Error("User not found!");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    if (!user.authentication.verified) {
+      const err = new Error("User not verified!");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    const isPasswordRight = await bcrypt.compare(
+      req.body.password,
+      user.password
+    );
+    if (!isPasswordRight) {
+      const err = new Error("Wrong password!");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    const token = jwt.sign(
+      {
+        username: user.username,
+        userId: user._id.toString(),
+      },
+      secretKey,
+      { expiresIn: "30d" }
+    );
+    res.status(200).json({ token: token, userId: user._id.toString() });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
