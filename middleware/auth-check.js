@@ -1,7 +1,5 @@
 const jwt = require("jsonwebtoken");
 
-const secretKey = require("../private_values/jwt-secret-key");
-
 exports.authCheck = (req, res, next) => {
   const authHeader = req.get("Authorization");
   if (!authHeader) {
@@ -13,7 +11,7 @@ exports.authCheck = (req, res, next) => {
   const token = authHeader.split(" ")[1]; //header field = "Bearer <token>"
   let decodedToken;
   try {
-    decodedToken = jwt.verify(token, secretKey);
+    decodedToken = jwt.verify(token, process.env.JWT_KEY);
   } catch (err) {
     err.statusCode = 500;
     throw err;

@@ -8,11 +8,8 @@ const sgMail = require("@sendgrid/mail");
 const Chip = require("../models/chip");
 const Folder = require("../models/folder");
 const User = require("../models/user");
-const secretKey = require("../private_values/jwt-secret-key");
-const sgApiKey = require("../private_values/sendgrip-api-key");
-const emailSender = require("../private_values/email-sender");
 
-sgMail.setApiKey(sgApiKey);
+sgMail.setApiKey(process.env.SENDGRIP_API_KEY);
 
 exports.signupUser = async (req, res, next) => {
   const errors = validationResult(req);
@@ -38,7 +35,7 @@ exports.signupUser = async (req, res, next) => {
     // since the backend is not hosted for now, you get the raw token here, instead of a link
     const msg = {
       to: req.body.email,
-      from: emailSender,
+      from: process.env.SENDER_EMAIL,
       subject: "Account Verification for BN Folder Builder",
       text:
         "Here's your token to verify your account: " +
@@ -120,7 +117,7 @@ exports.loginUser = async (req, res, next) => {
         username: user.username,
         userId: user._id.toString(),
       },
-      secretKey,
+      process.env.JWT_KEY,
       { expiresIn: "30d" }
     );
     res.status(200).json({ token: token, userId: user._id.toString() });
