@@ -3,11 +3,16 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const { ObjectId } = require("bson");
 const crypto = require("crypto");
+const sgMail = require("@sendgrid/mail");
 
 const Chip = require("../models/chip");
 const Folder = require("../models/folder");
 const User = require("../models/user");
 const secretKey = require("../private_values/jwt-secret-key");
+const sgApiKey = require("../private_values/sendgrip-api-key");
+const emailSender = require("../private_values/email-sender");
+
+sgMail.setApiKey(sgApiKey);
 
 exports.signupUser = async (req, res, next) => {
   const errors = validationResult(req);
@@ -30,7 +35,24 @@ exports.signupUser = async (req, res, next) => {
     });
     const result = await user.save();
 
-    res.status(201).json({ message: "User created!", userId: result._id });
+    // since the backend is not hosted for now, you get the raw token here, instead of a link
+    const msg = {
+      to: req.body.email,
+      from: emailSender,
+      subject: "Account Verification for BN Folder Builder",
+      text:
+        "Here's your token to verify your account: " +
+        user.authentication.token,
+      html: `
+        <p>Here's your token to verify your account: ${user.authentication.token}</p>
+      `,
+    };
+    sgMail.send(msg);
+
+    res.status(201).json({
+      message: "User created and verification email being sent!",
+      userId: result._id,
+    });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
