@@ -35,6 +35,8 @@ router.post(
   controller.signupUser
 );
 
+router.put("/verify-user/:token", controller.verifyUser);
+
 router.post("/login-user", controller.loginUser);
 
 router.delete("/delete-user", authCheck, controller.deleteUser);

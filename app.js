@@ -1,9 +1,9 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+if (process.env.NODE_ENV !== "production") require("dotenv").config();
 
 const routes = require("./routes/routes");
-const mongoUrl = require("./private_values/mongo-url");
 
 const app = express();
 
@@ -30,7 +30,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-  .connect(mongoUrl)
+  .connect(process.env.MONGO_URL)
   .then((result) => {
     app.listen(8080);
   })

@@ -20,6 +20,18 @@ const userSchema = new Schema({
       ref: "Folder",
     },
   ],
+  authentication: {
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+    token: {
+      type: String,
+    },
+    expiration: {
+      type: Date,
+    },
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);
