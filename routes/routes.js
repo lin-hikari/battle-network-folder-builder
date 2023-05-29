@@ -1,7 +1,8 @@
 const express = require("express");
 const { param, body } = require("express-validator");
 
-const controller = require("../controllers/controller");
+const userController = require("../controllers/user-controller");
+const folderController = require("../controllers/folder-controller");
 const User = require("../models/user");
 const { authCheck } = require("../middleware/auth-check");
 
@@ -32,31 +33,31 @@ router.post(
       .normalizeEmail(),
     body("password").trim().isLength({ min: 6 }),
   ],
-  controller.signupUser
+  userController.signupUser
 );
 
-router.put("/verify-user/:token", controller.verifyUser);
+router.put("/verify-user/:token", userController.verifyUser);
 
-router.post("/login-user", controller.loginUser);
+router.post("/login-user", userController.loginUser);
 
-router.delete("/delete-user", authCheck, controller.deleteUser);
+router.delete("/delete-user", authCheck, userController.deleteUser);
 
-router.post("/create-folder", authCheck, controller.createFolder);
+router.post("/create-folder", authCheck, folderController.createFolder);
 
-router.delete("/delete-folder", authCheck, controller.deleteFolder);
+router.delete("/delete-folder", authCheck, folderController.deleteFolder);
 
 router.get(
   "/view-folder/:folderId",
   [param("folderId").trim().isLength({ min: 24, max: 24 })],
-  controller.viewFolder
+  folderController.viewFolder
 );
 
-router.put("/add-chip-to-folder", authCheck, controller.addChipToFolder);
+router.put("/add-chip-to-folder", authCheck, folderController.addChipToFolder);
 
 router.put(
   "/remove-chip-from-folder",
   authCheck,
-  controller.removeChipFromFolder
+  folderController.removeChipFromFolder
 );
 
 module.exports = router;
