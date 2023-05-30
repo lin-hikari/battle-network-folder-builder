@@ -142,11 +142,8 @@ exports.addChipToFolder = async (req, res, next) => {
 };
 
 exports.removeChipFromFolder = async (req, res, next) => {
-  const folderId = req.body.folderId;
-  const chipNum = req.body.chipNum;
-
   try {
-    const folder = await Folder.findById(folderId);
+    const folder = await Folder.findById(req.body.folderId);
     if (!folder) {
       const error = new Error("Folder not found!");
       error.statusCode = 404;
@@ -159,7 +156,7 @@ exports.removeChipFromFolder = async (req, res, next) => {
       throw err;
     }
 
-    const chip = await Chip.findOne({ number: chipNum });
+    const chip = await Chip.findOne({ number: req.body.chipNum });
     if (!chip) {
       const error = new Error("Chip not found!");
       error.statusCode = 404;
