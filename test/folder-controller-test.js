@@ -1,11 +1,64 @@
 const expect = require("chai").expect;
 const sinon = require("sinon");
 
+const FolderController = require("../controllers/folder-controller");
+const User = require("../models/user");
+
 describe("Folder Controller", function () {
   describe("Create Folder", function () {
-    it("should throw an error (400) if the user is not found", function () {});
+    it("should throw an error (400) if the user is not found", async function () {
+      sinon.stub(User, "findById");
+      User.findById.returns(null);
 
-    it("should throw an error (400) if max number of folders is reached", function () {});
+      const req = {
+        body: {
+          name: "folderName",
+          description: "folderDesc",
+          creator: "abc123",
+        },
+      };
+      let errorInfo;
+      await FolderController.createFolder(req, {}, (err) => {
+        errorInfo = err;
+      });
+
+      User.findById.restore();
+      expect(errorInfo).to.be.an("error");
+      expect(errorInfo).to.have.property("statusCode", 400);
+      expect(errorInfo).to.have.property("message", "User not found!");
+    });
+
+    it("should throw an error (400) if max number of folders is reached", async function () {
+      sinon.stub(User, "findById");
+      User.findById.returns(
+        new User({
+          username: "dummy",
+          email: "dummy@mail.com",
+          password: "dummy",
+          folders: new Array(10),
+        })
+      );
+
+      const req = {
+        body: {
+          name: "folderName",
+          description: "folderDesc",
+          creator: "abc123",
+        },
+      };
+      let errorInfo;
+      await FolderController.createFolder(req, {}, (err) => {
+        errorInfo = err;
+      });
+
+      User.findById.restore();
+      expect(errorInfo).to.be.an("error");
+      expect(errorInfo).to.have.property("statusCode", 400);
+      expect(errorInfo).to.have.property(
+        "message",
+        "Max number of folders reached!"
+      );
+    });
 
     it("should add a folder reference to user who created it", function () {});
 
