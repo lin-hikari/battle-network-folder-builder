@@ -34,6 +34,7 @@ exports.createFolder = async (req, res, next) => {
       message: "Folder created successfully!",
       newFolder: newFolder,
     });
+    return user;
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
