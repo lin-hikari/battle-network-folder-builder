@@ -1,8 +1,10 @@
 const expect = require("chai").expect;
 const sinon = require("sinon");
+const mongoose = require("mongoose");
 
 const FolderController = require("../controllers/folder-controller");
 const User = require("../models/user");
+const Folder = require("../models/folder");
 
 describe("Folder Controller", function () {
   describe("Create Folder", function () {
@@ -60,7 +62,46 @@ describe("Folder Controller", function () {
       );
     });
 
-    it("should add a folder reference to user who created it", function () {});
+    it("should add one folder reference to user who created it", async function () {
+      sinon.stub(User, "findById");
+      User.findById.returns(
+        new User({
+          username: "dummy",
+          email: "dummy@mail.com",
+          password: "dummy",
+        })
+      );
+      sinon.stub(Folder.prototype, "save");
+      Folder.prototype.save.returns();
+      sinon.stub(User.prototype, "save");
+      User.prototype.save.returns();
+
+      const req = {
+        body: {
+          name: "folderName",
+          description: "folderDesc",
+        },
+        userId: new mongoose.Types.ObjectId(),
+      };
+      const res = {
+        status: function (code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function (data) {
+          this.message = data.message;
+          this.newFolder = data.newFolder;
+        },
+      };
+
+      const user = await FolderController.createFolder(req, res, () => {});
+      User.findById.restore();
+      Folder.prototype.save.restore();
+      User.prototype.save.restore();
+
+      expect(user.folders[0]._id).to.be.equal(res.newFolder._id);
+      expect(user.folders).to.have.length(1);
+    });
 
     it("should send a success message (201) if folder is created successfully", function () {});
 
