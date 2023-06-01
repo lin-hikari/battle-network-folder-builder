@@ -117,7 +117,35 @@ describe("Folder Controller", function () {
       sinon.stub(User.prototype, "save");
       User.prototype.save.returns();
 
-    it("should throw an error (500) if no folder name is provided", function () {});
+      const req = {
+        body: {
+          name: "folderName",
+          description: "folderDesc",
+        },
+        userId: new mongoose.Types.ObjectId(),
+      };
+      const res = {
+        status: function (code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function (data) {
+          this.message = data.message;
+          this.newFolder = data.newFolder;
+        },
+      };
+
+      await FolderController.createFolder(req, res, () => {});
+      User.findById.restore();
+      Folder.prototype.save.restore();
+      User.prototype.save.restore();
+
+      expect(res.statusCode).to.be.equal(201);
+      expect(res.message).to.be.equal("Folder created successfully!");
+    });
+
+    it("should throw an error (500) if no folder name is provided", async function () {
+    });
 
     it("should throw an error (500) if no folder description is provided", function () {});
   });
