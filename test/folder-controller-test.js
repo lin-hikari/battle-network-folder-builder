@@ -103,7 +103,19 @@ describe("Folder Controller", function () {
       expect(user.folders).to.have.length(1);
     });
 
-    it("should send a success message (201) if folder is created successfully", function () {});
+    it("should send a success message (201) if folder is created successfully", async function () {
+      sinon.stub(User, "findById");
+      User.findById.returns(
+        new User({
+          username: "dummy",
+          email: "dummy@mail.com",
+          password: "dummy",
+        })
+      );
+      sinon.stub(Folder.prototype, "save");
+      Folder.prototype.save.returns();
+      sinon.stub(User.prototype, "save");
+      User.prototype.save.returns();
 
     it("should throw an error (500) if no folder name is provided", function () {});
 
