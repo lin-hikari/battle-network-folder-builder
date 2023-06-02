@@ -19,6 +19,27 @@ describe("Folder Controller", function () {
       );
     }
 
+    function requestGeneral(folderName, folderDesc) {
+      return {
+        body: {
+          name: folderName,
+          description: folderDesc,
+        },
+        userId: new mongoose.Types.ObjectId(),
+      };
+    }
+
+    const responseGeneral = {
+      status: function (code) {
+        this.statusCode = code;
+        return this;
+      },
+      json: function (data) {
+        this.message = data.message;
+        this.newFolder = data.newFolder;
+      },
+    };
+
     before(function () {
       sinon.stub(Folder.prototype, "save").callsFake(function () {
         if (!this.name)
@@ -52,15 +73,10 @@ describe("Folder Controller", function () {
     it("should throw an error (400) if the user is not found", async function () {
       sinon.stub(User, "findById").returns(null);
 
-      const req = {
-        body: {
-          name: "folderName",
-          description: "folderDesc",
-          creator: "abc123",
-        },
-      };
+      const req = requestGeneral("folderName", "folderDesc");
+      const res = responseGeneral;
       let errorInfo;
-      await FolderController.createFolder(req, {}, (err) => {
+      await FolderController.createFolder(req, res, (err) => {
         errorInfo = err;
       });
 
@@ -72,15 +88,10 @@ describe("Folder Controller", function () {
     it("should throw an error (400) if max number of folders is reached", async function () {
       dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 10);
 
-      const req = {
-        body: {
-          name: "folderName",
-          description: "folderDesc",
-          creator: "abc123",
-        },
-      };
+      const req = requestGeneral("folderName", "folderDesc");
+      const res = responseGeneral;
       let errorInfo;
-      await FolderController.createFolder(req, {}, (err) => {
+      await FolderController.createFolder(req, res, (err) => {
         errorInfo = err;
       });
 
@@ -95,23 +106,8 @@ describe("Folder Controller", function () {
     it("should add one folder reference to user who created it", async function () {
       dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
 
-      const req = {
-        body: {
-          name: "folderName",
-          description: "folderDesc",
-        },
-        userId: new mongoose.Types.ObjectId(),
-      };
-      const res = {
-        status: function (code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function (data) {
-          this.message = data.message;
-          this.newFolder = data.newFolder;
-        },
-      };
+      const req = requestGeneral("folderName", "folderDesc");
+      const res = responseGeneral;
       const user = await FolderController.createFolder(req, res, () => {});
 
       expect(user.folders[0]._id).to.be.equal(res.newFolder._id);
@@ -121,23 +117,8 @@ describe("Folder Controller", function () {
     it("should send a success message (201) if folder is created successfully", async function () {
       dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
 
-      const req = {
-        body: {
-          name: "folderName",
-          description: "folderDesc",
-        },
-        userId: new mongoose.Types.ObjectId(),
-      };
-      const res = {
-        status: function (code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function (data) {
-          this.message = data.message;
-          this.newFolder = data.newFolder;
-        },
-      };
+      const req = requestGeneral("folderName", "folderDesc");
+      const res = responseGeneral;
       await FolderController.createFolder(req, res, () => {});
 
       expect(res.statusCode).to.be.equal(201);
@@ -147,14 +128,10 @@ describe("Folder Controller", function () {
     it("should throw an error (500) if no folder name is provided", async function () {
       dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
 
-      const req = {
-        body: {
-          description: "folderDesc",
-        },
-        userId: new mongoose.Types.ObjectId(),
-      };
+      const req = requestGeneral(null, "folderDesc");
+      const res = responseGeneral;
       let errorInfo;
-      await FolderController.createFolder(req, {}, (err) => {
+      await FolderController.createFolder(req, res, (err) => {
         errorInfo = err;
       });
 
@@ -169,22 +146,8 @@ describe("Folder Controller", function () {
     it("should throw an error (500) if no folder description is provided", async function () {
       dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
 
-      const req = {
-        body: {
-          name: "folderName",
-        },
-        userId: new mongoose.Types.ObjectId(),
-      };
-      const res = {
-        status: function (code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function (data) {
-          this.message = data.message;
-          this.newFolder = data.newFolder;
-        },
-      };
+      const req = requestGeneral("folderName", null);
+      const res = responseGeneral;
       let errorInfo;
       await FolderController.createFolder(req, res, (err) => {
         errorInfo = err;
