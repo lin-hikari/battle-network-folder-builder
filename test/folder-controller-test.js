@@ -6,19 +6,19 @@ const FolderController = require("../controllers/folder-controller");
 const User = require("../models/user");
 const Folder = require("../models/folder");
 
-function dummyUserFindByIt(username, email, pw, folderNum) {
-  sinon.stub(User, "findById").returns(
-    new User({
-      username: username,
-      email: email,
-      password: pw,
-      folders: new Array(folderNum),
-    })
-  );
-}
-
 describe("Folder Controller", function () {
   describe("Create Folder", function () {
+    function dummyUserFindByIt(username, email, pw, folderNum) {
+      sinon.stub(User, "findById").returns(
+        new User({
+          username: username,
+          email: email,
+          password: pw,
+          folders: new Array(folderNum),
+        })
+      );
+    }
+
     before(function () {
       sinon.stub(Folder.prototype, "save").callsFake(function () {
         if (!this.name)
