@@ -8,7 +8,7 @@ const Folder = require("../models/folder");
 
 describe("Folder Controller", function () {
   describe("Create Folder", function () {
-    function dummyUserFindByIt(username, email, pw, folderNum) {
+    function generalStubUserFindById(username, email, pw, folderNum) {
       sinon.stub(User, "findById").returns(
         new User({
           username: username,
@@ -86,7 +86,7 @@ describe("Folder Controller", function () {
     });
 
     it("should throw an error (400) if max number of folders is reached", async function () {
-      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 10);
+      generalStubUserFindById("dummy", "dummy@mail.com", "dummy", 10);
 
       const req = requestGeneral("folderName", "folderDesc");
       const res = responseGeneral;
@@ -104,7 +104,7 @@ describe("Folder Controller", function () {
     });
 
     it("should add one folder reference to user who created it", async function () {
-      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
+      generalStubUserFindById("dummy", "dummy@mail.com", "dummy", 0);
 
       const req = requestGeneral("folderName", "folderDesc");
       const res = responseGeneral;
@@ -115,7 +115,7 @@ describe("Folder Controller", function () {
     });
 
     it("should send a success message (201) if folder is created successfully", async function () {
-      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
+      generalStubUserFindById("dummy", "dummy@mail.com", "dummy", 0);
 
       const req = requestGeneral("folderName", "folderDesc");
       const res = responseGeneral;
@@ -126,7 +126,7 @@ describe("Folder Controller", function () {
     });
 
     it("should throw an error (500) if no folder name is provided", async function () {
-      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
+      generalStubUserFindById("dummy", "dummy@mail.com", "dummy", 0);
 
       const req = requestGeneral(null, "folderDesc");
       const res = responseGeneral;
@@ -144,7 +144,7 @@ describe("Folder Controller", function () {
     });
 
     it("should throw an error (500) if no folder description is provided", async function () {
-      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
+      generalStubUserFindById("dummy", "dummy@mail.com", "dummy", 0);
 
       const req = requestGeneral("folderName", null);
       const res = responseGeneral;
