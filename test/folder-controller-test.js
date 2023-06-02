@@ -6,11 +6,51 @@ const FolderController = require("../controllers/folder-controller");
 const User = require("../models/user");
 const Folder = require("../models/folder");
 
+function dummyUserFindByIt(username, email, pw, folderNum) {
+  sinon.stub(User, "findById").returns(
+    new User({
+      username: username,
+      email: email,
+      password: pw,
+      folders: new Array(folderNum),
+    })
+  );
+}
+
 describe("Folder Controller", function () {
   describe("Create Folder", function () {
+    before(function () {
+      sinon.stub(Folder.prototype, "save").callsFake(function () {
+        if (!this.name)
+          return Promise.reject(
+            new Error(
+              "Folder validation failed: name: Path `name` is required."
+            )
+          );
+
+        if (!this.description)
+          return Promise.reject(
+            new Error(
+              "Folder validation failed: name: Path `description` is required."
+            )
+          );
+        Promise.resolve({ status: 200 });
+      });
+
+      sinon.stub(User.prototype, "save").returns();
+    });
+
+    after(function () {
+      Folder.prototype.save.restore();
+      User.prototype.save.restore();
+    });
+
+    afterEach(function () {
+      User.findById.restore();
+    });
+
     it("should throw an error (400) if the user is not found", async function () {
-      sinon.stub(User, "findById");
-      User.findById.returns(null);
+      sinon.stub(User, "findById").returns(null);
 
       const req = {
         body: {
@@ -24,22 +64,13 @@ describe("Folder Controller", function () {
         errorInfo = err;
       });
 
-      User.findById.restore();
       expect(errorInfo).to.be.an("error");
       expect(errorInfo).to.have.property("statusCode", 400);
       expect(errorInfo).to.have.property("message", "User not found!");
     });
 
     it("should throw an error (400) if max number of folders is reached", async function () {
-      sinon.stub(User, "findById");
-      User.findById.returns(
-        new User({
-          username: "dummy",
-          email: "dummy@mail.com",
-          password: "dummy",
-          folders: new Array(10),
-        })
-      );
+      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 10);
 
       const req = {
         body: {
@@ -53,7 +84,6 @@ describe("Folder Controller", function () {
         errorInfo = err;
       });
 
-      User.findById.restore();
       expect(errorInfo).to.be.an("error");
       expect(errorInfo).to.have.property("statusCode", 400);
       expect(errorInfo).to.have.property(
@@ -63,18 +93,7 @@ describe("Folder Controller", function () {
     });
 
     it("should add one folder reference to user who created it", async function () {
-      sinon.stub(User, "findById");
-      User.findById.returns(
-        new User({
-          username: "dummy",
-          email: "dummy@mail.com",
-          password: "dummy",
-        })
-      );
-      sinon.stub(Folder.prototype, "save");
-      Folder.prototype.save.returns();
-      sinon.stub(User.prototype, "save");
-      User.prototype.save.returns();
+      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
 
       const req = {
         body: {
@@ -93,29 +112,14 @@ describe("Folder Controller", function () {
           this.newFolder = data.newFolder;
         },
       };
-
       const user = await FolderController.createFolder(req, res, () => {});
-      User.findById.restore();
-      Folder.prototype.save.restore();
-      User.prototype.save.restore();
 
       expect(user.folders[0]._id).to.be.equal(res.newFolder._id);
       expect(user.folders).to.have.length(1);
     });
 
     it("should send a success message (201) if folder is created successfully", async function () {
-      sinon.stub(User, "findById");
-      User.findById.returns(
-        new User({
-          username: "dummy",
-          email: "dummy@mail.com",
-          password: "dummy",
-        })
-      );
-      sinon.stub(Folder.prototype, "save");
-      Folder.prototype.save.returns();
-      sinon.stub(User.prototype, "save");
-      User.prototype.save.returns();
+      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
 
       const req = {
         body: {
@@ -134,36 +138,14 @@ describe("Folder Controller", function () {
           this.newFolder = data.newFolder;
         },
       };
-
       await FolderController.createFolder(req, res, () => {});
-      User.findById.restore();
-      Folder.prototype.save.restore();
-      User.prototype.save.restore();
 
       expect(res.statusCode).to.be.equal(201);
       expect(res.message).to.be.equal("Folder created successfully!");
     });
 
     it("should throw an error (500) if no folder name is provided", async function () {
-      sinon.stub(Folder.prototype, "save").callsFake(function () {
-        if (!this.name) {
-          return Promise.reject(
-            new Error(
-              "Folder validation failed: name: Path `name` is required."
-            )
-          );
-        }
-        Promise.resolve({ status: 200 });
-      });
-      sinon.stub(User.prototype, "save").returns();
-      sinon.stub(User, "findById");
-      User.findById.returns(
-        new User({
-          username: "dummy",
-          email: "dummy@mail.com",
-          password: "dummy",
-        })
-      );
+      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
 
       const req = {
         body: {
@@ -171,15 +153,11 @@ describe("Folder Controller", function () {
         },
         userId: new mongoose.Types.ObjectId(),
       };
-
       let errorInfo;
       await FolderController.createFolder(req, {}, (err) => {
         errorInfo = err;
       });
 
-      User.findById.restore();
-      Folder.prototype.save.restore();
-      User.prototype.save.restore();
       expect(errorInfo).to.be.an("error");
       expect(errorInfo).to.have.property("statusCode", 500);
       expect(errorInfo).to.have.property(
@@ -189,25 +167,7 @@ describe("Folder Controller", function () {
     });
 
     it("should throw an error (500) if no folder description is provided", async function () {
-      sinon.stub(Folder.prototype, "save").callsFake(function () {
-        if (!this.description) {
-          return Promise.reject(
-            new Error(
-              "Folder validation failed: name: Path `description` is required."
-            )
-          );
-        }
-        Promise.resolve(200);
-      });
-      sinon.stub(User.prototype, "save").returns();
-      sinon.stub(User, "findById");
-      User.findById.returns(
-        new User({
-          username: "dummy",
-          email: "dummy@mail.com",
-          password: "dummy",
-        })
-      );
+      dummyUserFindByIt("dummy", "dummy@mail.com", "dummy", 0);
 
       const req = {
         body: {
@@ -225,15 +185,11 @@ describe("Folder Controller", function () {
           this.newFolder = data.newFolder;
         },
       };
-
       let errorInfo;
       await FolderController.createFolder(req, res, (err) => {
         errorInfo = err;
       });
 
-      User.findById.restore();
-      Folder.prototype.save.restore();
-      User.prototype.save.restore();
       expect(errorInfo).to.be.an("error");
       expect(errorInfo).to.have.property("statusCode", 500);
       expect(errorInfo).to.have.property(
