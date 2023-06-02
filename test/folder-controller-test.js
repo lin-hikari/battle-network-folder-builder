@@ -145,9 +145,102 @@ describe("Folder Controller", function () {
     });
 
     it("should throw an error (500) if no folder name is provided", async function () {
+      sinon.stub(Folder.prototype, "save").callsFake(function () {
+        if (!this.name) {
+          return Promise.reject(
+            new Error(
+              "Folder validation failed: name: Path `name` is required."
+            )
+          );
+        }
+        Promise.resolve({ status: 200 });
+      });
+      sinon.stub(User.prototype, "save").returns();
+      sinon.stub(User, "findById");
+      User.findById.returns(
+        new User({
+          username: "dummy",
+          email: "dummy@mail.com",
+          password: "dummy",
+        })
+      );
+
+      const req = {
+        body: {
+          description: "folderDesc",
+        },
+        userId: new mongoose.Types.ObjectId(),
+      };
+
+      let errorInfo;
+      await FolderController.createFolder(req, {}, (err) => {
+        errorInfo = err;
+      });
+
+      User.findById.restore();
+      Folder.prototype.save.restore();
+      User.prototype.save.restore();
+      expect(errorInfo).to.be.an("error");
+      expect(errorInfo).to.have.property("statusCode", 500);
+      expect(errorInfo).to.have.property(
+        "message",
+        "Folder validation failed: name: Path `name` is required."
+      );
     });
 
-    it("should throw an error (500) if no folder description is provided", function () {});
+    it("should throw an error (500) if no folder description is provided", async function () {
+      sinon.stub(Folder.prototype, "save").callsFake(function () {
+        if (!this.description) {
+          return Promise.reject(
+            new Error(
+              "Folder validation failed: name: Path `description` is required."
+            )
+          );
+        }
+        Promise.resolve(200);
+      });
+      sinon.stub(User.prototype, "save").returns();
+      sinon.stub(User, "findById");
+      User.findById.returns(
+        new User({
+          username: "dummy",
+          email: "dummy@mail.com",
+          password: "dummy",
+        })
+      );
+
+      const req = {
+        body: {
+          name: "folderName",
+        },
+        userId: new mongoose.Types.ObjectId(),
+      };
+      const res = {
+        status: function (code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function (data) {
+          this.message = data.message;
+          this.newFolder = data.newFolder;
+        },
+      };
+
+      let errorInfo;
+      await FolderController.createFolder(req, res, (err) => {
+        errorInfo = err;
+      });
+
+      User.findById.restore();
+      Folder.prototype.save.restore();
+      User.prototype.save.restore();
+      expect(errorInfo).to.be.an("error");
+      expect(errorInfo).to.have.property("statusCode", 500);
+      expect(errorInfo).to.have.property(
+        "message",
+        "Folder validation failed: name: Path `description` is required."
+      );
+    });
   });
 
   // describe("Delete Folder", function () {
