@@ -102,6 +102,39 @@ exports.viewFolder = async (req, res, next) => {
   }
 };
 
+exports.downloadFolder = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const err = new Error("Folder ID format is invalid.");
+    err.statusCode = 422;
+    return next(err);
+  }
+
+  const folderId = req.params.folderId;
+  const folder = await Folder.findById(folderId).populate("chips");
+  try {
+    if (!folder) {
+      const error = new Error("Could not find folder.");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    res.setHeader(
+      "Content-disposition",
+      "attachment; filename=" + folder.name + ".json"
+    );
+    res.setHeader("Content-type", "application/json");
+    res.write(JSON.stringify(folder.toJSON()), function (err) {
+      res.end();
+    });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
 exports.addChipToFolder = async (req, res, next) => {
   try {
     const folder = await Folder.findById(req.body.folderId);

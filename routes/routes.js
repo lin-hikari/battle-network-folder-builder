@@ -52,6 +52,12 @@ router.get(
   folderController.viewFolder
 );
 
+router.get(
+  "/download-folder/:folderId",
+  [param("folderId").trim().isLength({ min: 24, max: 24 })],
+  folderController.downloadFolder
+);
+
 router.put("/add-chip-to-folder", authCheck, folderController.addChipToFolder);
 
 router.put(
