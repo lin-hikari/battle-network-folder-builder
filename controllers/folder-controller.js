@@ -119,12 +119,21 @@ exports.downloadFolder = async (req, res, next) => {
       throw error;
     }
 
+    var jsonFolder = folder.toJSON();
+    delete jsonFolder["_id"];
+    delete jsonFolder["creator"];
+    delete jsonFolder["__v"];
+    jsonFolder.chips.forEach((chip) => {
+      delete chip["_id"];
+    });
+
     res.setHeader(
       "Content-disposition",
       "attachment; filename=" + folder.name + ".json"
     );
     res.setHeader("Content-type", "application/json");
-    res.write(JSON.stringify(folder.toJSON()), function (err) {
+    res.write(JSON.stringify(jsonFolder), function (err) {
+      if (err) throw err;
       res.end();
     });
   } catch (err) {
