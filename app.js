@@ -32,6 +32,6 @@ app.use((error, req, res, next) => {
 mongoose
   .connect(process.env.MONGO_URL)
   .then((result) => {
-    app.listen(8080);
+    app.listen(Number(process.env.PORT_NUM));
   })
   .catch((err) => console.log(err));
